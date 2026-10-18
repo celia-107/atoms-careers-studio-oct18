@@ -48,7 +48,7 @@ const currentScreenObserver=new IntersectionObserver(entries=>{for(const entry o
 screenPanels.forEach(panel=>currentScreenObserver.observe(panel));
 
 // A brief Chinese letter-edge particle release; real DOM text remains selectable.
-const dustTitle=document.querySelector('.particle-title');
+function attachTypeDust(dustTitle){
 const dustCanvas=dustTitle?.querySelector('.type-dust');
 let dustFrame=0;
 function stopTypeDust(){cancelAnimationFrame(dustFrame);dustFrame=0;dustTitle?.classList.remove('dust-active');if(dustCanvas)dustCanvas.getContext('2d').clearRect(0,0,dustCanvas.width,dustCanvas.height)}
@@ -65,3 +65,6 @@ async function playTypeDust(){
  dustFrame=requestAnimationFrame(draw)
 }
 if(dustTitle){new IntersectionObserver(entries=>{if(entries[0].intersectionRatio>.6)playTypeDust();else if(!entries[0].isIntersecting)stopTypeDust()},{threshold:[0,.6]}).observe(dustTitle);dustTitle.addEventListener('pointerenter',()=>{if(matchMedia('(hover:hover) and (pointer:fine)').matches)playTypeDust()});reduced.addEventListener('change',()=>{if(reduced.matches)stopTypeDust()})}
+
+}
+document.querySelectorAll('.particle-title').forEach(attachTypeDust);

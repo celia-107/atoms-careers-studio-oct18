@@ -53,3 +53,8 @@ const visibleNoiseTitles=new Set();let noiseTimer=0,noiseSeed=11;
 function updateTypeNoise(){clearInterval(noiseTimer);noiseTimer=0;if(!reduced.matches&&!document.hidden&&visibleNoiseTitles.size){noiseTimer=setInterval(()=>{noiseSeed=noiseSeed%97+1;noiseField.setAttribute('seed',String(noiseSeed))},160)}}
 const noiseObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting)visibleNoiseTitles.add(entry.target);else visibleNoiseTitles.delete(entry.target)}updateTypeNoise()},{threshold:0});
 document.querySelectorAll('.noise-title').forEach(title=>noiseObserver.observe(title));document.addEventListener('visibilitychange',updateTypeNoise);reduced.addEventListener('change',updateTypeNoise);
+
+// Accessible timeline: switching stages never moves the page scroll position.
+const journeyTabs=[...document.querySelectorAll('[data-journey]')];
+function showJourney(index,focus=false){journeyTabs.forEach((tab,i)=>{tab.setAttribute('aria-selected',String(i===index));tab.tabIndex=i===index?0:-1;document.getElementById(`journey-panel-${i}`).hidden=i!==index});if(focus)journeyTabs[index].focus()}
+journeyTabs.forEach((tab,index)=>{tab.addEventListener('click',()=>showJourney(index));tab.addEventListener('keydown',event=>{let next=index;if(event.key==='ArrowRight')next=(index+1)%journeyTabs.length;else if(event.key==='ArrowLeft')next=(index+journeyTabs.length-1)%journeyTabs.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=journeyTabs.length-1;else return;event.preventDefault();showJourney(next,true)})});

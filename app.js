@@ -47,24 +47,9 @@ const screenPanels=[...document.querySelectorAll('main>.hero,main>.section,main>
 const currentScreenObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting&&entry.intersectionRatio>.55){screenPanels.forEach(panel=>panel.classList.toggle('is-current',panel===entry.target));if(entry.target.id==='intro')navLinks.forEach(link=>link.removeAttribute('aria-current'))}}},{threshold:[.55,.75]});
 screenPanels.forEach(panel=>currentScreenObserver.observe(panel));
 
-// A brief Chinese letter-edge particle release; real DOM text remains selectable.
-function attachTypeDust(dustTitle){
-const dustCanvas=dustTitle?.querySelector('.type-dust');
-let dustFrame=0;
-function stopTypeDust(){cancelAnimationFrame(dustFrame);dustFrame=0;dustTitle?.classList.remove('dust-active');if(dustCanvas)dustCanvas.getContext('2d').clearRect(0,0,dustCanvas.width,dustCanvas.height)}
-async function playTypeDust(){
- if(!dustTitle||reduced.matches||dustFrame)return;
- await document.fonts.ready;
- const box=dustCanvas.getBoundingClientRect(),scale=Math.min(devicePixelRatio||1,2);dustCanvas.width=Math.round(box.width*scale);dustCanvas.height=Math.round(box.height*scale);const ctx=dustCanvas.getContext('2d');ctx.setTransform(scale,0,0,scale,0,0);
- const mask=document.createElement('canvas');mask.width=Math.ceil(box.width);mask.height=Math.ceil(box.height);const m=mask.getContext('2d',{willReadFrequently:true});
- for(const line of dustTitle.querySelectorAll('.particle-line')){const r=line.getBoundingClientRect(),style=getComputedStyle(line);m.font=`900 ${style.fontSize} ${style.fontFamily}`;m.textBaseline='top';m.fillStyle=style.color;m.fillText(line.textContent,r.left-box.left,r.top-box.top+parseFloat(style.fontSize)*.1)}
- const pixels=m.getImageData(0,0,mask.width,mask.height),points=[];const maxX=mask.width*.44;
- for(let y=1;y<mask.height;y+=4)for(let x=20;x<maxX;x+=4){const i=(y*mask.width+x)*4;if(pixels.data[i+3]>160&&Math.random()>.35)points.push({x,y,size:.6+Math.random()*1.4,dx:-20-Math.random()*60,dy:(Math.random()-.5)*65,color:`rgb(${pixels.data[i]},${pixels.data[i+1]},${pixels.data[i+2]})`})}
- const particles=points.filter((_,i)=>i%Math.max(1,Math.ceil(points.length/850))===0);dustTitle.classList.remove('dust-active');void dustTitle.offsetWidth;dustTitle.classList.add('dust-active');const started=performance.now();
- function draw(now){const p=Math.min(1,(now-started)/1250);ctx.clearRect(0,0,box.width,box.height);const spread=Math.sin(p*Math.PI);for(const dot of particles){ctx.fillStyle=dot.color;ctx.globalAlpha=spread*(1-p*.35);ctx.fillRect(dot.x+dot.dx*spread,dot.y+dot.dy*spread,dot.size,dot.size)}ctx.globalAlpha=1;if(p<1)dustFrame=requestAnimationFrame(draw);else stopTypeDust()}
- dustFrame=requestAnimationFrame(draw)
-}
-if(dustTitle){new IntersectionObserver(entries=>{if(entries[0].intersectionRatio>.6)playTypeDust();else if(!entries[0].isIntersecting)stopTypeDust()},{threshold:[0,.6]}).observe(dustTitle);dustTitle.addEventListener('pointerenter',()=>{if(matchMedia('(hover:hover) and (pointer:fine)').matches)playTypeDust()});reduced.addEventListener('change',()=>{if(reduced.matches)stopTypeDust()})}
-
-}
-document.querySelectorAll('.particle-title').forEach(attachTypeDust);
+// The glyph stays fixed; only the ink grain changes inside its contour.
+const noiseField=document.getElementById('type-noise-field');
+const visibleNoiseTitles=new Set();let noiseTimer=0,noiseSeed=11;
+function updateTypeNoise(){clearInterval(noiseTimer);noiseTimer=0;if(!reduced.matches&&!document.hidden&&visibleNoiseTitles.size){noiseTimer=setInterval(()=>{noiseSeed=noiseSeed%97+1;noiseField.setAttribute('seed',String(noiseSeed))},160)}}
+const noiseObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting)visibleNoiseTitles.add(entry.target);else visibleNoiseTitles.delete(entry.target)}updateTypeNoise()},{threshold:0});
+document.querySelectorAll('.noise-title').forEach(title=>noiseObserver.observe(title));document.addEventListener('visibilitychange',updateTypeNoise);reduced.addEventListener('change',updateTypeNoise);
